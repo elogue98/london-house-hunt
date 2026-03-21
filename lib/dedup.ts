@@ -2,7 +2,7 @@ import { Property } from "@/types/property";
 
 const SOURCE_PRIORITY = ["rightmove", "onthemarket", "zoopla"];
 
-function normalizeAddress(addr: string): string {
+export function normalizeAddress(addr: string): string {
   return addr
     .toLowerCase()
     .replace(/^(flat|apartment|unit|studio)\s+\w+[,\s]*/i, "")
