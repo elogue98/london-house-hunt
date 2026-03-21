@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 from supabase import create_client, Client
 
 import rightmove
+import onthemarket
 
 load_dotenv()
 
@@ -121,11 +122,16 @@ if __name__ == "__main__":
     all_listings: list[dict] = []
 
     print("Fetching from Rightmove...")
-    all_listings.extend(rightmove.scrape())
+    try:
+        all_listings.extend(rightmove.scrape())
+    except Exception as e:
+        print(f"  Rightmove failed: {e}")
 
-    # Future sources:
-    # print("Fetching from Zoopla...")
-    # all_listings.extend(zoopla.scrape())
+    print("Fetching from OnTheMarket...")
+    try:
+        all_listings.extend(onthemarket.scrape())
+    except Exception as e:
+        print(f"  OnTheMarket failed: {e}")
 
     print(f"Upserting {len(all_listings)} listings into Supabase...")
     new_listings = upsert_properties(supabase, all_listings)

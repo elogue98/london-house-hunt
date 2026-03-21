@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { deduplicateProperties } from "@/lib/dedup";
 import DashboardHeader from "@/components/ui/DashboardHeader";
 import PropertyDashboard from "@/components/properties/PropertyDashboard";
 
@@ -51,7 +52,7 @@ export default async function DashboardPage() {
       <DashboardHeader />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <PropertyDashboard
-          initialNew={newRes.data ?? []}
+          initialNew={deduplicateProperties(newRes.data ?? [])}
           initialWishlist={wishlistRes.data ?? []}
           initialCalled={calledRes.data ?? []}
           initialBin={binRes.data ?? []}

@@ -1,4 +1,4 @@
-name: Scrape Rightmove
+name: Scrape Properties
 
 on:
   schedule:
