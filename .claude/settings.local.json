@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx:*)",
+      "Bash(cp:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "Bash(python3 -m venv .venv)",
+      "Bash(source .venv/bin/activate)",
+      "Bash(pip install:*)",
+      "Bash(python3 -c \"import ast; ast.parse\\(open\\(''scraper.py''\\).read\\(\\)\\); print\\(''Syntax OK''\\)\")",
+      "Bash(python3 -c \":*)",
+      "Bash(python3 -c \"import ast; ast.parse\\(open\\(''rightmove.py''\\).read\\(\\)\\); ast.parse\\(open\\(''scraper.py''\\).read\\(\\)\\); print\\(''Both files: syntax OK''\\)\")",
+      "Bash(python3 scraper.py)",
+      "WebFetch(domain:api-docs.rightmove.co.uk)",
+      "Bash(pkill -f \"next dev\")"
+    ]
+  }
+}

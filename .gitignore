@@ -27,6 +27,12 @@ yarn-error.log*
 
 # local env files
 .env*.local
+.env
+
+# Python scraper
+scraper/.venv/
+scraper/__pycache__/
+scraper/*.pyc
 
 # vercel
 .vercel
