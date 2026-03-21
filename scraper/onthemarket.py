@@ -26,6 +26,7 @@ HEADERS = {
 SEARCH_PARAMS = {
     "min-price": "2000",
     "max-price": "2700",
+    "recently-added": "24-hours",
 }
 
 MAX_PAGES = 10
@@ -122,6 +123,12 @@ def _parse_property(prop: dict, now: str) -> dict:
     is_reduced = prop.get("reduced?", False)
     listing_update_reason = "price_reduced" if is_reduced else None
 
+    # Estimate first_visible_date from "Added today" / "Added < 7 days" etc.
+    first_visible_date = now  # default to now for fresh listings
+    listing_update_date = None
+    if is_reduced:
+        listing_update_date = now
+
     return {
         "source": "onthemarket",
         "source_id": str(prop.get("id", "")),
@@ -134,8 +141,8 @@ def _parse_property(prop: dict, now: str) -> dict:
         "image_url": first_image,
         "listing_url": listing_url,
         "agent_name": agent_name,
-        "first_visible_date": None,  # OTM doesn't provide exact dates in search results
-        "listing_update_date": None,
+        "first_visible_date": first_visible_date,
+        "listing_update_date": listing_update_date,
         "listing_update_reason": listing_update_reason,
         "last_seen_at": now,
     }

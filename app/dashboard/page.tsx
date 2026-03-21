@@ -10,7 +10,7 @@ export const metadata = {
 };
 
 export default async function DashboardPage() {
-  const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+  const oneDayAgo = new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString();
 
   const [newRes, wishlistRes, calledRes, binRes, lastScrapedRes] = await Promise.all([
     supabase
@@ -18,7 +18,7 @@ export default async function DashboardPage() {
       .select("*")
       .eq("is_active", true)
       .is("category", null)
-      .gte("first_seen_at", threeDaysAgo)
+      .gte("first_seen_at", oneDayAgo)
       .order("last_activity_date", { ascending: false, nullsFirst: false }),
     supabase
       .from("properties")

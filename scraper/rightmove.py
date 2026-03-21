@@ -30,7 +30,7 @@ SEARCH_PARAMS = {
     "channel": "RENT",
     "currencyCode": "GBP",
     "sortType": "6",
-    "maxDaysSinceAdded": "3",
+    "maxDaysSinceAdded": "1",
 }
 
 MAX_PAGES = 42

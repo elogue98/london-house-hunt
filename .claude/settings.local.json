@@ -18,7 +18,16 @@
       "Bash(git commit:*)",
       "Bash(git push:*)",
       "Bash(python scraper.py)",
-      "Bash(pip3 install:*)"
+      "Bash(pip3 install:*)",
+      "Bash(find /Users/eoinlogue/london-house-hunt -type f \\\\\\(-name *schema* -o -name *migration* -o -name *.sql \\\\\\))",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:scrapfly.io)",
+      "WebFetch(domain:www.scrapingdog.com)",
+      "WebFetch(domain:propapis.com)",
+      "WebFetch(domain:automatio.ai)",
+      "Bash(python3 -m playwright install chromium)",
+      "Bash(python3:*)"
     ]
   }
 }
