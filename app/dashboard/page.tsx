@@ -18,19 +18,19 @@ export default async function DashboardPage() {
       .eq("is_active", true)
       .is("category", null)
       .gte("first_seen_at", threeDaysAgo)
-      .order("first_visible_date", { ascending: false, nullsFirst: false }),
+      .order("last_activity_date", { ascending: false, nullsFirst: false }),
     supabase
       .from("properties")
       .select("*")
       .eq("is_active", true)
       .eq("category", "wishlist")
-      .order("first_visible_date", { ascending: false, nullsFirst: false }),
+      .order("last_activity_date", { ascending: false, nullsFirst: false }),
     supabase
       .from("properties")
       .select("*")
       .eq("is_active", true)
       .eq("category", "called")
-      .order("first_visible_date", { ascending: false, nullsFirst: false }),
+      .order("last_activity_date", { ascending: false, nullsFirst: false }),
     supabase
       .from("properties")
       .select("last_seen_at")

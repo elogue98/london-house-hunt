@@ -118,22 +118,24 @@ export default function PropertyCard({
         )}
         <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/60 to-transparent" />
 
-        {/* Status badge */}
-        {isNew && (
-          <span className="absolute top-3 left-3 bg-accent-green text-white text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded animate-pulse-subtle">
-            New
-          </span>
-        )}
-        {property.category === "wishlist" && (
+        {/* Status badge — only one shown, in priority order */}
+        {property.category === "wishlist" ? (
           <span className="absolute top-3 left-3 bg-accent-gold text-white text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded">
             Wish List
           </span>
-        )}
-        {property.category === "called" && (
+        ) : property.category === "called" ? (
           <span className="absolute top-3 left-3 bg-accent-blue text-white text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded">
             Called
           </span>
-        )}
+        ) : property.listing_update_reason?.toLowerCase().includes("price") ? (
+          <span className="absolute top-3 left-3 bg-accent text-white text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded">
+            Price reduced
+          </span>
+        ) : isNew ? (
+          <span className="absolute top-3 left-3 bg-accent-green text-white text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded animate-pulse-subtle">
+            New
+          </span>
+        ) : null}
 
         {/* Source badge */}
         <span className="absolute top-3 right-3 bg-black/40 backdrop-blur-sm text-white/80 text-[10px] uppercase tracking-wider px-2 py-1 rounded">

@@ -14,6 +14,9 @@ export interface Property {
   listing_url: string;
   agent_name: string | null;
   first_visible_date: string | null;
+  listing_update_date: string | null;
+  listing_update_reason: string | null;
+  last_activity_date: string | null;
   first_seen_at: string;
   last_seen_at: string;
   is_active: boolean;

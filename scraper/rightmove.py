@@ -107,9 +107,10 @@ def _parse_property(prop: dict, now: str) -> dict:
     raw_url = prop.get("propertyUrl", "")
     listing_url = BASE_URL + raw_url if raw_url.startswith("/") else raw_url
 
-    first_visible = prop.get("firstVisibleDate") or (
-        prop.get("listingUpdate", {}).get("listingUpdateDate")
-    )
+    listing_update = prop.get("listingUpdate", {})
+    first_visible = prop.get("firstVisibleDate") or listing_update.get("listingUpdateDate")
+    listing_update_date = listing_update.get("listingUpdateDate")
+    listing_update_reason = listing_update.get("listingUpdateReason")
 
     price = _get_monthly_price(prop.get("price", {}))
 
@@ -126,6 +127,8 @@ def _parse_property(prop: dict, now: str) -> dict:
         "listing_url": listing_url,
         "agent_name": prop.get("customer", {}).get("branchDisplayName"),
         "first_visible_date": first_visible,
+        "listing_update_date": listing_update_date,
+        "listing_update_reason": listing_update_reason,
         "last_seen_at": now,
     }
 
