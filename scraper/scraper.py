@@ -5,6 +5,7 @@ and reports new listings.
 """
 
 import os
+import httpx
 from datetime import datetime, timezone
 
 from dotenv import load_dotenv
@@ -55,6 +56,62 @@ def upsert_properties(supabase: Client, properties: list[dict]) -> list[dict]:
     return new
 
 
+def send_email_notification(new_listings: list[dict]) -> None:
+    api_key = os.environ.get("RESEND_API_KEY")
+    to_email = os.environ.get("NOTIFY_EMAIL")
+    if not api_key or not to_email:
+        print("  No RESEND_API_KEY or NOTIFY_EMAIL set — skipping email.")
+        return
+
+    rows = ""
+    for p in new_listings:
+        beds = f"{p['bedrooms']}bed · " if p.get("bedrooms") else ""
+        price = f"£{p['price']:,}/mo"
+        rows += f"""
+        <tr>
+          <td style="padding:12px 0;border-bottom:1px solid #e5e0da;">
+            <a href="{p['listing_url']}" style="font-size:15px;font-weight:600;color:#1a1715;text-decoration:none;">
+              {p['address']}
+            </a><br>
+            <span style="font-size:13px;color:#5a534e;">{beds}{price} · {p.get('agent_name') or p['source']}</span>
+          </td>
+        </tr>"""
+
+    count = len(new_listings)
+    html = f"""
+    <div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#1a1715;">
+      <h2 style="font-size:20px;margin-bottom:4px;">
+        {count} new listing{'s' if count != 1 else ''} on London House Hunt
+      </h2>
+      <p style="font-size:13px;color:#9a928c;margin-top:0;">
+        Islington · £2,000–£2,700/mo
+      </p>
+      <table style="width:100%;border-collapse:collapse;">{rows}</table>
+      <p style="margin-top:24px;">
+        <a href="https://london-house-hunt.vercel.app/dashboard"
+           style="background:#c45a3c;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-size:14px;">
+          View dashboard
+        </a>
+      </p>
+    </div>"""
+
+    resp = httpx.post(
+        "https://api.resend.com/emails",
+        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+        json={
+            "from": "London House Hunt <onboarding@resend.dev>",
+            "to": [to_email],
+            "subject": f"{count} new listing{'s' if count != 1 else ''} — London House Hunt",
+            "html": html,
+        },
+        timeout=15,
+    )
+    if resp.status_code == 200:
+        print(f"  Email sent to {to_email}")
+    else:
+        print(f"  Email failed: {resp.status_code} {resp.text}")
+
+
 if __name__ == "__main__":
     print(f"[{datetime.now(timezone.utc).isoformat()}] Starting scrape...")
 
@@ -78,3 +135,5 @@ if __name__ == "__main__":
         print("New listings:")
         for p in new_listings:
             print(f"  {p['listing_url']}")
+        print("Sending email notification...")
+        send_email_notification(new_listings)
