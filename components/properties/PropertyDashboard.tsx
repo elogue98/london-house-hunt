@@ -134,7 +134,7 @@ export default function PropertyDashboard({
 
   const emptyMessages: Record<TabId, { msg: string; sub?: string }> = {
     new: {
-      msg: search ? "No listings match your search" : "No new listings in the last 3 days",
+      msg: search ? "No listings match your search" : "No new listings",
       sub: search ? undefined : "The scraper runs every 4 hours — check back later.",
     },
     wishlist: {

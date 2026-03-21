@@ -31,7 +31,7 @@ export default function DashboardHeader() {
             London House Hunt
           </h1>
           <p className="text-text-secondary text-sm mt-1 font-body">
-            Islington rentals&ensp;·&ensp;£2,000–£2,700/mo&ensp;·&ensp;Last 3 days
+            Islington rentals&ensp;·&ensp;£2,000–£2,700/mo
           </p>
         </div>
         {time && (
