@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Property, PropertyCategory } from "@/types/property";
 import TabBar, { TabId } from "@/components/ui/TabBar";
 import StatsBar from "@/components/ui/StatsBar";
@@ -10,29 +10,45 @@ interface PropertyDashboardProps {
   initialNew: Property[];
   initialWishlist: Property[];
   initialCalled: Property[];
+  initialBin: Property[];
   lastScraped: string | null;
+}
+
+function matchesSearch(p: Property, q: string): boolean {
+  const lower = q.toLowerCase();
+  return [p.address, p.notes, p.agent_name, p.property_type, p.description]
+    .some((field) => field?.toLowerCase().includes(lower));
 }
 
 export default function PropertyDashboard({
   initialNew,
   initialWishlist,
   initialCalled,
+  initialBin,
   lastScraped,
 }: PropertyDashboardProps) {
   const [activeTab, setActiveTab] = useState<TabId>("new");
+  const [search, setSearch] = useState("");
   const [newProperties, setNewProperties] = useState(initialNew);
   const [wishlistProperties, setWishlistProperties] = useState(initialWishlist);
   const [calledProperties, setCalledProperties] = useState(initialCalled);
+  const [binProperties, setBinProperties] = useState(initialBin);
 
-  const allArrays = { new: newProperties, wishlist: wishlistProperties, called: calledProperties };
+  const allArrays = {
+    new: newProperties,
+    wishlist: wishlistProperties,
+    called: calledProperties,
+    bin: binProperties,
+  };
   const setters = {
     new: setNewProperties,
     wishlist: setWishlistProperties,
     called: setCalledProperties,
+    bin: setBinProperties,
   };
 
   const findProperty = (id: string): { property: Property; tab: TabId } | null => {
-    for (const tab of ["new", "wishlist", "called"] as TabId[]) {
+    for (const tab of ["new", "wishlist", "called", "bin"] as TabId[]) {
       const p = allArrays[tab].find((p) => p.id === id);
       if (p) return { property: p, tab };
     }
@@ -47,18 +63,17 @@ export default function PropertyDashboard({
       const { property: prop, tab: fromTab } = found;
       const updated = { ...prop, category };
 
-      // Optimistic: remove from current tab
       setters[fromTab]((prev) => prev.filter((p) => p.id !== id));
 
-      // Add to target tab (unless binned — binned disappear entirely)
       if (category === null) {
         setters.new((prev) => [updated, ...prev]);
       } else if (category === "wishlist") {
         setters.wishlist((prev) => [updated, ...prev]);
       } else if (category === "called") {
         setters.called((prev) => [updated, ...prev]);
+      } else if (category === "bin") {
+        setters.bin((prev) => [updated, ...prev]);
       }
-      // "bin" — don't add to any tab
 
       try {
         const res = await fetch(`/api/properties/${id}`, {
@@ -66,30 +81,29 @@ export default function PropertyDashboard({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ category }),
         });
-
         if (!res.ok) throw new Error("Failed to update");
       } catch {
-        // Rollback: put it back where it was
-        if (category !== null && category !== "bin") {
-          const targetTab = category === "wishlist" ? "wishlist" : "called";
+        // Rollback
+        if (category !== null) {
+          const targetTab = category === "wishlist" ? "wishlist"
+            : category === "called" ? "called"
+            : "bin";
           setters[targetTab]((prev) => prev.filter((p) => p.id !== id));
         }
         setters[fromTab]((prev) => [prop, ...prev]);
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [newProperties, wishlistProperties, calledProperties]
+    [newProperties, wishlistProperties, calledProperties, binProperties]
   );
 
   const updateNotes = useCallback(
     async (id: string, notes: string | null) => {
-      // Optimistic update in whichever tab it's in
-      for (const tab of ["new", "wishlist", "called"] as TabId[]) {
+      for (const tab of ["new", "wishlist", "called", "bin"] as TabId[]) {
         setters[tab]((prev) =>
           prev.map((p) => (p.id === id ? { ...p, notes } : p))
         );
       }
-
       try {
         const res = await fetch(`/api/properties/${id}`, {
           method: "PATCH",
@@ -98,26 +112,43 @@ export default function PropertyDashboard({
         });
         if (!res.ok) throw new Error("Failed to save notes");
       } catch {
-        // Silent fail — note is still in local state
+        // Silent fail
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 
+  const filteredProperties = useMemo(() => {
+    const base = allArrays[activeTab];
+    if (!search.trim()) return base;
+    return base.filter((p) => matchesSearch(p, search));
+  }, [activeTab, search, newProperties, wishlistProperties, calledProperties, binProperties]);
+
   const tabs = [
     { id: "new" as TabId, label: "New", count: newProperties.length },
     { id: "wishlist" as TabId, label: "Wish List", count: wishlistProperties.length },
     { id: "called" as TabId, label: "Called", count: calledProperties.length },
+    { id: "bin" as TabId, label: "Bin", count: binProperties.length },
   ];
 
   const emptyMessages: Record<TabId, { msg: string; sub?: string }> = {
     new: {
-      msg: "No new listings in the last 3 days",
-      sub: "The scraper runs every 4 hours — check back later.",
+      msg: search ? "No listings match your search" : "No new listings in the last 3 days",
+      sub: search ? undefined : "The scraper runs every 4 hours — check back later.",
     },
-    wishlist: { msg: "Your wish list is empty", sub: "Star a property to save it here." },
-    called: { msg: "No called properties yet", sub: "Mark a property as called after contacting the agent." },
+    wishlist: {
+      msg: search ? "No listings match your search" : "Your wish list is empty",
+      sub: search ? undefined : "Star a property to save it here.",
+    },
+    called: {
+      msg: search ? "No listings match your search" : "No called properties yet",
+      sub: search ? undefined : "Mark a property as called after contacting the agent.",
+    },
+    bin: {
+      msg: search ? "No listings match your search" : "Your bin is empty",
+      sub: search ? undefined : "Binned properties appear here.",
+    },
   };
 
   return (
@@ -129,10 +160,37 @@ export default function PropertyDashboard({
         lastScraped={lastScraped}
       />
 
+      {/* Search */}
+      <div className="relative">
+        <svg
+          className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted"
+          fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+        </svg>
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by location, notes, agent..."
+          className="w-full pl-9 pr-4 py-2.5 bg-bg-card border border-border rounded-lg text-sm font-body text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent transition-colors"
+        />
+        {search && (
+          <button
+            onClick={() => setSearch("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
+      </div>
+
       <TabBar activeTab={activeTab} onTabChange={setActiveTab} tabs={tabs} />
 
       <PropertyGrid
-        properties={allArrays[activeTab]}
+        properties={filteredProperties}
         onCategoryChange={updateCategory}
         onNotesChange={updateNotes}
         emptyMessage={emptyMessages[activeTab].msg}

@@ -16,7 +16,9 @@
       "Bash(pkill -f \"next dev\")",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(python scraper.py)",
+      "Bash(pip3 install:*)"
     ]
   }
 }
