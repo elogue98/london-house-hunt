@@ -165,7 +165,7 @@ export default function PropertyDashboard({
       {/* Search */}
       <div className="relative">
         <svg
-          className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted"
+          className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted"
           fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}
         >
           <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
@@ -175,28 +175,28 @@ export default function PropertyDashboard({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by location, notes, agent..."
-          className="w-full pl-9 pr-4 py-2.5 bg-bg-card border border-border rounded-lg text-sm font-body text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent transition-colors"
+          className="w-full pl-8 pr-16 py-2 bg-bg-card border border-border rounded-lg text-sm font-body text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent transition-colors"
         />
-        {search && (
-          <button
-            onClick={() => setSearch("")}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        )}
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+          {search.trim() && (
+            <span className="text-text-muted text-xs font-body">
+              {filteredProperties.length}/{totalForTab}
+            </span>
+          )}
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              className="text-text-muted hover:text-text-secondary transition-colors"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
       </div>
 
-      <div className="flex items-center justify-between gap-4">
-        <TabBar activeTab={activeTab} onTabChange={setActiveTab} tabs={tabs} />
-        {search.trim() && (
-          <span className="text-text-muted text-xs font-body whitespace-nowrap flex-shrink-0">
-            {filteredProperties.length} of {totalForTab}
-          </span>
-        )}
-      </div>
+      <TabBar activeTab={activeTab} onTabChange={setActiveTab} tabs={tabs} />
 
       <PropertyGrid
         properties={filteredProperties}
