@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 export default function DashboardHeader() {
   const [time, setTime] = useState<string | null>(null);
@@ -34,11 +35,20 @@ export default function DashboardHeader() {
             Islington rentals&ensp;·&ensp;£2,000–£2,700/mo
           </p>
         </div>
-        {time && (
-          <span suppressHydrationWarning className="text-text-muted text-xs font-body hidden sm:block">
-            {time}
-          </span>
-        )}
+        <div className="flex items-center gap-4">
+          {time && (
+            <span suppressHydrationWarning className="text-text-muted text-xs font-body hidden sm:block">
+              {time}
+            </span>
+          )}
+          <Link
+            href="/about"
+            className="text-text-muted hover:text-text-secondary transition-colors text-xs font-body hidden sm:block"
+            title="How it works"
+          >
+            How it works
+          </Link>
+        </div>
       </div>
     </header>
   );
