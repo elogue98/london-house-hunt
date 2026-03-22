@@ -22,6 +22,14 @@
 
   --border: #e5e0da;
   --border-hover: #cec8c0;
+
+  /* Warm tints for category button active states */
+  --btn-bin-bg: #fdf0ec;
+  --btn-bin-border: #f2c4b2;
+  --btn-wishlist-bg: #faf5e4;
+  --btn-wishlist-border: #e6d48a;
+  --btn-called-bg: #edf3fa;
+  --btn-called-border: #b8d0e8;
 }
 
 body {

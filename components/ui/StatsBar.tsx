@@ -29,26 +29,25 @@ export default function StatsBar({
     ? "..."
     : "Never";
 
-  const stats = [
-    { label: "New", value: newCount, color: "text-accent-green" },
-    { label: "Wish List", value: wishlistCount, color: "text-accent-gold" },
-    { label: "Called", value: calledCount, color: "text-accent-blue" },
-    { label: "Last Scraped", value: lastScrapedStr, color: "text-text-secondary" },
-  ];
-
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-      {stats.map((stat) => (
-        <div
-          key={stat.label}
-          className="bg-bg-card rounded-lg border border-border p-4 text-center"
-        >
-          <p className={`text-2xl font-display ${stat.color}`}>{stat.value}</p>
-          <p className="text-text-muted text-xs mt-1 uppercase tracking-wider font-body">
-            {stat.label}
-          </p>
-        </div>
-      ))}
+    <div className="flex items-center gap-5 px-4 py-2.5 bg-bg-card rounded-lg border border-border text-sm font-body">
+      <span>
+        <span className="font-semibold text-accent-green">{newCount}</span>
+        <span className="text-text-muted ml-1.5">new</span>
+      </span>
+      <span className="text-border select-none">·</span>
+      <span>
+        <span className="font-semibold text-accent-gold">{wishlistCount}</span>
+        <span className="text-text-muted ml-1.5">wish list</span>
+      </span>
+      <span className="text-border select-none">·</span>
+      <span>
+        <span className="font-semibold text-accent-blue">{calledCount}</span>
+        <span className="text-text-muted ml-1.5">called</span>
+      </span>
+      <span className="ml-auto text-text-muted text-xs hidden sm:block">
+        Scraped {lastScrapedStr}
+      </span>
     </div>
   );
 }

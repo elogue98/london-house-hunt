@@ -25,7 +25,44 @@ function relativeTime(dateStr: string | null): string {
   });
 }
 
+const SOURCE_LABEL: Record<string, string> = {
+  rightmove: "Rightmove",
+  onthemarket: "OnTheMarket",
+  zoopla: "Zoopla",
+};
+
+const SOURCE_COLOR: Record<string, string> = {
+  rightmove: "bg-[#0061a2]/70",
+  onthemarket: "bg-[#4a7c59]/70",
+  zoopla: "bg-[#7c3aed]/70",
+};
+
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+// SVG icons
+const IconBin = () => (
+  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0a1 1 0 01-1-1V5a1 1 0 011-1h8a1 1 0 011 1v1a1 1 0 01-1 1H9z" />
+  </svg>
+);
+
+const IconStar = ({ filled }: { filled: boolean }) => (
+  <svg className="w-3.5 h-3.5" fill={filled ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+  </svg>
+);
+
+const IconCheck = () => (
+  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+  </svg>
+);
+
+const IconBed = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+  </svg>
+);
 
 export default function PropertyCard({
   property,
@@ -37,7 +74,6 @@ export default function PropertyCard({
   const [notesDraft, setNotesDraft] = useState(property.notes ?? "");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Defer time-dependent values to client to avoid hydration mismatch
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -65,11 +101,16 @@ export default function PropertyCard({
     setTimeout(() => textareaRef.current?.focus(), 0);
   };
 
+  const sourceBadgeClass = SOURCE_COLOR[property.source] ?? "bg-black/50";
+  const sourceLabel = SOURCE_LABEL[property.source] ?? property.source;
+
   const categoryBtn = (
     cat: PropertyCategory,
     label: string,
-    icon: string,
-    activeClass: string,
+    Icon: React.ReactNode,
+    activeBg: string,
+    activeBorder: string,
+    activeText: string,
     hoverClass: string
   ) => {
     const isActive = property.category === cat;
@@ -80,14 +121,18 @@ export default function PropertyCard({
           e.preventDefault();
           onCategoryChange(property.id, isActive ? null : cat);
         }}
+        style={isActive ? { backgroundColor: activeBg, borderColor: activeBorder } : {}}
         className={`
           flex-1 flex items-center justify-center gap-1.5 py-2 rounded-md text-xs font-medium
-          transition-all duration-150
-          ${isActive ? `${activeClass} scale-[0.97]` : `text-text-muted ${hoverClass}`}
+          border transition-all duration-150
+          ${isActive
+            ? `${activeText} scale-[0.97] border-transparent`
+            : `text-text-muted border-transparent ${hoverClass}`
+          }
         `}
         title={isActive ? `Remove from ${label}` : label}
       >
-        <span>{icon}</span>
+        {Icon}
         <span>{label}</span>
       </button>
     );
@@ -112,13 +157,15 @@ export default function PropertyCard({
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-text-muted text-sm">
-            No image
+          <div className="w-full h-full flex items-center justify-center">
+            <svg className="w-10 h-10 text-border" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3 21l6.75-6.75a2.25 2.25 0 013.182 0L21 21M15 11.25a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+            </svg>
           </div>
         )}
         <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/60 to-transparent" />
 
-        {/* Status badge — only one shown, in priority order */}
+        {/* Status badge */}
         {property.category === "wishlist" ? (
           <span className="absolute top-3 left-3 bg-accent-gold text-white text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded">
             Wish List
@@ -137,9 +184,9 @@ export default function PropertyCard({
           </span>
         ) : null}
 
-        {/* Source badge */}
-        <span className="absolute top-3 right-3 bg-black/40 backdrop-blur-sm text-white/80 text-[10px] uppercase tracking-wider px-2 py-1 rounded">
-          {property.source}
+        {/* Source badge — colored per source, higher contrast */}
+        <span className={`absolute top-3 right-3 ${sourceBadgeClass} backdrop-blur-sm text-white text-[10px] uppercase tracking-wider px-2 py-1 rounded`}>
+          {sourceLabel}
         </span>
 
         {/* Price + listed time overlay */}
@@ -160,9 +207,7 @@ export default function PropertyCard({
           <div className="flex items-center gap-3 text-sm text-text-secondary font-body">
             {property.bedrooms != null && (
               <span className="flex items-center gap-1">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
-                </svg>
+                <IconBed />
                 {property.bedrooms} bed
               </span>
             )}
@@ -218,19 +263,19 @@ export default function PropertyCard({
         {/* Category buttons */}
         <div className="flex gap-1 mt-auto pt-1 border-t border-border">
           {categoryBtn(
-            "bin", "Bin", "✕",
-            "bg-red-50 text-accent-red border border-red-200",
-            "hover:bg-red-50 hover:text-accent-red"
+            "bin", "Bin", <IconBin />,
+            "var(--btn-bin-bg)", "var(--btn-bin-border)", "text-accent-red",
+            "hover:bg-[#fdf0ec] hover:text-accent-red"
           )}
           {categoryBtn(
-            "wishlist", "Wish List", "★",
-            "bg-amber-50 text-accent-gold border border-amber-200",
-            "hover:bg-amber-50 hover:text-accent-gold"
+            "wishlist", "Wish List", <IconStar filled={property.category === "wishlist"} />,
+            "var(--btn-wishlist-bg)", "var(--btn-wishlist-border)", "text-accent-gold",
+            "hover:bg-[#faf5e4] hover:text-accent-gold"
           )}
           {categoryBtn(
-            "called", "Called", "✓",
-            "bg-blue-50 text-accent-blue border border-blue-200",
-            "hover:bg-blue-50 hover:text-accent-blue"
+            "called", "Called", <IconCheck />,
+            "var(--btn-called-bg)", "var(--btn-called-border)", "text-accent-blue",
+            "hover:bg-[#edf3fa] hover:text-accent-blue"
           )}
         </div>
       </div>

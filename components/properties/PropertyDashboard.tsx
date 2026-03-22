@@ -132,10 +132,12 @@ export default function PropertyDashboard({
     { id: "bin" as TabId, label: "Bin", count: binProperties.length },
   ];
 
+  const totalForTab = allArrays[activeTab].length;
+
   const emptyMessages: Record<TabId, { msg: string; sub?: string }> = {
     new: {
-      msg: search ? "No listings match your search" : "No new listings",
-      sub: search ? undefined : "The scraper runs every 4 hours — check back later.",
+      msg: search ? "No listings match your search" : "Nothing new right now",
+      sub: search ? undefined : "You're up to date. The scraper runs every 4 hours.",
     },
     wishlist: {
       msg: search ? "No listings match your search" : "Your wish list is empty",
@@ -187,7 +189,14 @@ export default function PropertyDashboard({
         )}
       </div>
 
-      <TabBar activeTab={activeTab} onTabChange={setActiveTab} tabs={tabs} />
+      <div className="flex items-center justify-between gap-4">
+        <TabBar activeTab={activeTab} onTabChange={setActiveTab} tabs={tabs} />
+        {search.trim() && (
+          <span className="text-text-muted text-xs font-body whitespace-nowrap flex-shrink-0">
+            {filteredProperties.length} of {totalForTab}
+          </span>
+        )}
+      </div>
 
       <PropertyGrid
         properties={filteredProperties}
