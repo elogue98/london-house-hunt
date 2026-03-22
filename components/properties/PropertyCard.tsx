@@ -240,6 +240,10 @@ export default function PropertyCard({
               onChange={(e) => setNotesDraft(e.target.value)}
               onBlur={handleNotesBlur}
               onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleNotesBlur();
+                }
                 if (e.key === "Escape") {
                   setEditingNotes(false);
                   setNotesDraft(property.notes ?? "");
