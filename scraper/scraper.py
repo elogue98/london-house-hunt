@@ -59,8 +59,9 @@ def upsert_properties(supabase: Client, properties: list[dict]) -> list[dict]:
 
 def send_email_notification(new_listings: list[dict]) -> None:
     api_key = os.environ.get("RESEND_API_KEY")
-    to_email = os.environ.get("NOTIFY_EMAIL")
-    if not api_key or not to_email:
+    notify_email = os.environ.get("NOTIFY_EMAIL", "")
+    to_emails = [e.strip() for e in notify_email.split(",") if e.strip()]
+    if not api_key or not to_emails:
         print("  No RESEND_API_KEY or NOTIFY_EMAIL set — skipping email.")
         return
 
@@ -101,14 +102,14 @@ def send_email_notification(new_listings: list[dict]) -> None:
         headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
         json={
             "from": "London House Hunt <onboarding@resend.dev>",
-            "to": [to_email],
+            "to": to_emails,
             "subject": f"{count} new listing{'s' if count != 1 else ''} — London House Hunt",
             "html": html,
         },
         timeout=15,
     )
     if resp.status_code == 200:
-        print(f"  Email sent to {to_email}")
+        print(f"  Email sent to {', '.join(to_emails)}")
     else:
         print(f"  Email failed: {resp.status_code} {resp.text}")
 
