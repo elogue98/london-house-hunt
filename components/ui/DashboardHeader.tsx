@@ -93,7 +93,7 @@ export default function DashboardHeader() {
             Islington rentals&ensp;·&ensp;£2,000–£2,700/mo
           </p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-baseline gap-4">
           {time && (
             <span suppressHydrationWarning className="text-text-muted text-xs font-body hidden sm:block">
               {time}
