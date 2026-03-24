@@ -38,6 +38,23 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// Extract a JSON object starting at `start` index in `html`, handling strings correctly
+function extractJson(html: string, start: number): string {
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let i = start; i < html.length; i++) {
+    const c = html[i];
+    if (escaped) { escaped = false; continue; }
+    if (c === "\\" && inString) { escaped = true; continue; }
+    if (c === '"') { inString = !inString; continue; }
+    if (inString) continue;
+    if (c === "{") depth++;
+    else if (c === "}") { depth--; if (depth === 0) return html.slice(start, i + 1); }
+  }
+  throw new Error("Could not find end of JSON object");
+}
+
 async function fetchPage(url: string): Promise<string> {
   const res = await fetch(url, {
     headers: {
@@ -58,17 +75,14 @@ async function parseRightmove(url: string): Promise<Record<string, unknown>> {
 
   const html = await fetchPage(url);
 
-  // Rightmove detail pages embed JSON in <script type="application/json"> tags
-  const jsonMatch = html.match(
-    new RegExp('<script[^>]*type="application/json"[^>]*>([\\s\\S]*?)</script>')
-  );
-  if (!jsonMatch) throw new Error("Could not find embedded JSON on Rightmove page");
+  // Rightmove embeds property data as window.PAGE_MODEL = {...} in a JS script tag
+  const pageModelIdx = html.indexOf("window.PAGE_MODEL = ");
+  if (pageModelIdx === -1) throw new Error("Could not find PAGE_MODEL on Rightmove page");
 
-  const data = JSON.parse(jsonMatch[1]);
-  const pd =
-    data?.props?.pageProps?.propertyData ??
-    data?.props?.pageProps?.property ??
-    null;
+  const jsonStart = pageModelIdx + "window.PAGE_MODEL = ".length;
+  const jsonStr = extractJson(html, jsonStart);
+  const data = JSON.parse(jsonStr);
+  const pd = data?.propertyData ?? null;
 
   if (!pd) throw new Error("Could not extract property data from Rightmove page");
 
