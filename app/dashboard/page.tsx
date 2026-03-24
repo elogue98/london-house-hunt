@@ -1,6 +1,5 @@
 import { supabase } from "@/lib/supabase";
 import { deduplicateProperties, normalizeAddress } from "@/lib/dedup";
-import DashboardHeader from "@/components/ui/DashboardHeader";
 import PropertyDashboard from "@/components/properties/PropertyDashboard";
 
 export const dynamic = "force-dynamic";
@@ -61,9 +60,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-h-screen relative z-10">
-      <DashboardHeader />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <PropertyDashboard
+      <PropertyDashboard
           initialNew={deduplicateProperties(
             (newRes.data ?? []).filter(
               (p) => !categorisedAddresses.has(normalizeAddress(p.address))
@@ -74,7 +71,6 @@ export default async function DashboardPage() {
           initialBin={binRes.data ?? []}
           lastScraped={lastScraped}
         />
-      </main>
     </div>
   );
 }

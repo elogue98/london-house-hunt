@@ -195,7 +195,7 @@ async function parseOnTheMarket(
     }
   }
 
-  // Fallback: extract from meta tags if we're still missing data
+  // Fallback: extract from meta tags and page text
   if (!address) {
     const titleMatch = html.match(new RegExp('<title[^>]*>([\\s\\S]*?)</title>'));
     if (titleMatch) address = titleMatch[1].replace(/\s*[-|].*$/, "").trim();
@@ -205,13 +205,30 @@ async function parseOnTheMarket(
     if (ogImage) firstImage = ogImage[1];
   }
   if (price === 0) {
-    // Try extracting from page text
     const priceMatch = html.match(/£([\d,]+)\s*pcm/i);
     if (priceMatch) price = parseInt(priceMatch[1].replace(/,/g, ""), 10);
   }
   if (!description) {
     const descMatch = html.match(/<meta[^>]*name="description"[^>]*content="([^"]+)"/);
     if (descMatch) description = descMatch[1];
+  }
+  // Extract beds/baths/type/agent from title or description text
+  if (bedrooms === null) {
+    const bedMatch = (address + " " + (description || "")).match(/(\d+)\s*bed/i);
+    if (bedMatch) bedrooms = parseInt(bedMatch[1], 10);
+  }
+  if (bathrooms === null) {
+    const bathMatch = (address + " " + (description || "")).match(/(\d+)\s*bath/i);
+    if (bathMatch) bathrooms = parseInt(bathMatch[1], 10);
+  }
+  if (!propertyType) {
+    const typeMatch = (address + " " + (description || "")).match(/\b(flat|apartment|house|studio|maisonette|duplex|penthouse|room)\b/i);
+    if (typeMatch) propertyType = typeMatch[1].charAt(0).toUpperCase() + typeMatch[1].slice(1).toLowerCase();
+  }
+  if (!agentName) {
+    // OTM often has "marketed by X" or agent name in a data attribute
+    const agentMatch = html.match(/marketed\s+by\s+([^<"]+)/i) || html.match(/"agent-name"[^>]*>([^<]+)</);
+    if (agentMatch) agentName = agentMatch[1].trim();
   }
 
   return {

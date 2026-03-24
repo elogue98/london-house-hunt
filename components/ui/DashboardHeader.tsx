@@ -1,13 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Property } from "@/types/property";
 
 type ImportStatus = "idle" | "loading" | "success" | "error";
 
-export default function DashboardHeader() {
-  const router = useRouter();
+interface DashboardHeaderProps {
+  onImport?: (property: Property) => void;
+}
+
+export default function DashboardHeader({ onImport }: DashboardHeaderProps) {
   const [time, setTime] = useState<string | null>(null);
   const [showImport, setShowImport] = useState(false);
   const [importUrl, setImportUrl] = useState("");
@@ -68,7 +71,7 @@ export default function DashboardHeader() {
 
       setImportStatus("success");
       setImportMessage(data.address || "Listing imported");
-      router.refresh();
+      onImport?.(data as Property);
 
       setTimeout(() => {
         setShowImport(false);

@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useMemo } from "react";
 import { Property, PropertyCategory } from "@/types/property";
+import DashboardHeader from "@/components/ui/DashboardHeader";
 import TabBar, { TabId } from "@/components/ui/TabBar";
 import StatsBar from "@/components/ui/StatsBar";
 import PropertyGrid from "./PropertyGrid";
@@ -153,8 +154,14 @@ export default function PropertyDashboard({
     },
   };
 
+  const handleImport = useCallback((property: Property) => {
+    setNewProperties((prev) => [property, ...prev]);
+  }, []);
+
   return (
-    <div className="space-y-6">
+    <>
+    <DashboardHeader onImport={handleImport} />
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       <StatsBar
         newCount={newProperties.length}
         wishlistCount={wishlistProperties.length}
@@ -206,5 +213,6 @@ export default function PropertyDashboard({
         emptySubtext={emptyMessages[activeTab].sub}
       />
     </div>
+    </>
   );
 }
