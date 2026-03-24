@@ -59,7 +59,7 @@ def upsert_properties(supabase: Client, properties: list[dict]) -> list[dict]:
 
 def send_email_notification(new_listings: list[dict]) -> None:
     api_key = os.environ.get("RESEND_API_KEY")
-    notify_email = os.environ.get("NOTIFY_EMAIL", "")
+    notify_email = os.environ.get("NOTIFY_EMAIL") or os.environ.get("NOTFIY_EMAIL", "")
     to_emails = [e.strip() for e in notify_email.split(",") if e.strip()]
     if not api_key or not to_emails:
         print("  No RESEND_API_KEY or NOTIFY_EMAIL set — skipping email.")

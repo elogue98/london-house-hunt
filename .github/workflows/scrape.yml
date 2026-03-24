@@ -29,5 +29,6 @@ jobs:
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           NOTIFY_EMAIL: ${{ secrets.NOTIFY_EMAIL }}
+          NOTFIY_EMAIL: ${{ secrets.NOTFIY_EMAIL }}
         working-directory: scraper
         run: python scraper.py

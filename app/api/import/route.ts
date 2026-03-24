@@ -1,0 +1,232 @@
+import { NextRequest, NextResponse } from "next/server";
+import { supabaseServer } from "@/lib/supabase-server";
+
+const USER_AGENT =
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+
+export async function POST(request: NextRequest) {
+  const { url } = await request.json();
+
+  if (!url || typeof url !== "string") {
+    return NextResponse.json({ error: "URL is required" }, { status: 400 });
+  }
+
+  try {
+    let property;
+    if (url.includes("rightmove.co.uk")) {
+      property = await parseRightmove(url);
+    } else if (url.includes("onthemarket.com")) {
+      property = await parseOnTheMarket(url);
+    } else {
+      return NextResponse.json(
+        { error: "URL must be from rightmove.co.uk or onthemarket.com" },
+        { status: 400 }
+      );
+    }
+
+    const { data, error } = await supabaseServer
+      .from("properties")
+      .upsert(property, { onConflict: "source,source_id" })
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return NextResponse.json(data);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to import";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+async function fetchPage(url: string): Promise<string> {
+  const res = await fetch(url, {
+    headers: {
+      "User-Agent": USER_AGENT,
+      "Accept-Language": "en-GB,en;q=0.9",
+      Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    },
+  });
+  if (!res.ok) throw new Error(`Failed to fetch page: ${res.status}`);
+  return res.text();
+}
+
+async function parseRightmove(url: string): Promise<Record<string, unknown>> {
+  // Extract property ID from URL like /properties/12345 or /properties/12345#/
+  const idMatch = url.match(/properties\/(\d+)/);
+  if (!idMatch) throw new Error("Could not extract Rightmove property ID from URL");
+  const sourceId = idMatch[1];
+
+  const html = await fetchPage(url);
+
+  // Rightmove detail pages embed JSON in <script type="application/json"> tags
+  const jsonMatch = html.match(
+    new RegExp('<script[^>]*type="application/json"[^>]*>([\\s\\S]*?)</script>')
+  );
+  if (!jsonMatch) throw new Error("Could not find embedded JSON on Rightmove page");
+
+  const data = JSON.parse(jsonMatch[1]);
+  const pd =
+    data?.props?.pageProps?.propertyData ??
+    data?.props?.pageProps?.property ??
+    null;
+
+  if (!pd) throw new Error("Could not extract property data from Rightmove page");
+
+  // Extract price
+  let price = 0;
+  const priceInfo = pd.prices;
+  if (priceInfo) {
+    const primary = priceInfo.primaryPrice || "";
+    const pcmMatch = primary.match(/£([\d,]+)\s*pcm/i);
+    if (pcmMatch) {
+      price = parseInt(pcmMatch[1].replace(/,/g, ""), 10);
+    } else {
+      const pwMatch = primary.match(/£([\d,]+)\s*pw/i);
+      if (pwMatch) {
+        price = Math.round((parseInt(pwMatch[1].replace(/,/g, ""), 10) * 52) / 12);
+      }
+    }
+  }
+
+  // Extract first image
+  const images = pd.images || [];
+  const firstImage =
+    images[0]?.url || images[0]?.srcUrl || images[0]?.src || null;
+
+  return {
+    source: "rightmove",
+    source_id: sourceId,
+    address: pd.address?.displayAddress || pd.displayAddress || "",
+    price,
+    bedrooms: pd.bedrooms ?? null,
+    bathrooms: pd.bathrooms ?? null,
+    property_type: pd.propertySubType || pd.propertyType || "",
+    description: pd.text?.description || pd.summary || null,
+    image_url: firstImage,
+    listing_url: url.split("?")[0].split("#")[0],
+    agent_name:
+      pd.customer?.branchDisplayName ||
+      pd.customer?.displayName ||
+      pd.branchName ||
+      null,
+    last_seen_at: new Date().toISOString(),
+    is_active: true,
+  };
+}
+
+async function parseOnTheMarket(
+  url: string
+): Promise<Record<string, unknown>> {
+  // Extract property ID from URL like /details/12345678/
+  const idMatch = url.match(/details\/(\d+)/);
+  if (!idMatch) throw new Error("Could not extract OnTheMarket property ID from URL");
+  const sourceId = idMatch[1];
+
+  const html = await fetchPage(url);
+
+  // Try JSON-LD first
+  const jsonLdMatch = html.match(
+    new RegExp('<script[^>]*type="application/ld\\+json"[^>]*>([\\s\\S]*?)</script>')
+  );
+
+  let address = "";
+  let description: string | null = null;
+  let firstImage: string | null = null;
+
+  if (jsonLdMatch) {
+    try {
+      const ld = JSON.parse(jsonLdMatch[1]);
+      if (ld["@type"] === "Residence" || ld["@type"] === "SingleFamilyResidence" || ld["@type"] === "Apartment") {
+        address = ld.name || "";
+        description = ld.description || null;
+        firstImage = ld.image || ld.photo?.[0]?.contentUrl || null;
+      }
+    } catch {
+      // JSON-LD parse failed, continue to Redux state
+    }
+  }
+
+  // Try Redux state for structured data (price, bedrooms, agent, etc.)
+  let price = 0;
+  let bedrooms: number | null = null;
+  let bathrooms: number | null = null;
+  let propertyType = "";
+  let agentName: string | null = null;
+
+  // Look for the Next.js page data script
+  const scripts = html.match(new RegExp('<script[^>]*>[\\s\\S]*?</script>', 'g')) || [];
+  for (const script of scripts) {
+    if (!script.includes("initialReduxState") && !script.includes("property-details")) {
+      continue;
+    }
+
+    // Try to find property data in the page props
+    const propsMatch = script.match(new RegExp('(\\{"props"[\\s\\S]*\\})'));
+    if (!propsMatch) continue;
+
+    try {
+      const data = JSON.parse(propsMatch[1]);
+      const pageProps = data?.props?.pageProps || {};
+      const property = pageProps.property || pageProps.propertyDetails || {};
+
+      if (property.price) {
+        const pcm = property.price.match?.(/£([\d,]+)\s*pcm/i);
+        if (pcm) price = parseInt(pcm[1].replace(/,/g, ""), 10);
+        else {
+          const pw = property.price.match?.(/£([\d,]+)\s*pw/i);
+          if (pw) price = Math.round((parseInt(pw[1].replace(/,/g, ""), 10) * 52) / 12);
+        }
+      }
+      if (typeof property.price === "number") price = property.price;
+
+      address = address || property.address || property.displayAddress || "";
+      bedrooms = property.bedrooms ?? null;
+      bathrooms = property.bathrooms ?? null;
+      propertyType = property["humanised-property-type"] || property.propertyType || "";
+      agentName = property.agent?.name || property.agentName || null;
+      description = description || property.description || null;
+
+      if (!firstImage && property.images?.length) {
+        firstImage = property.images[0]?.default || property.images[0]?.webp || property.images[0]?.url || null;
+      }
+      break;
+    } catch {
+      continue;
+    }
+  }
+
+  // Fallback: extract from meta tags if we're still missing data
+  if (!address) {
+    const titleMatch = html.match(new RegExp('<title[^>]*>([\\s\\S]*?)</title>'));
+    if (titleMatch) address = titleMatch[1].replace(/\s*[-|].*$/, "").trim();
+  }
+  if (!firstImage) {
+    const ogImage = html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]+)"/);
+    if (ogImage) firstImage = ogImage[1];
+  }
+  if (price === 0) {
+    // Try extracting from page text
+    const priceMatch = html.match(/£([\d,]+)\s*pcm/i);
+    if (priceMatch) price = parseInt(priceMatch[1].replace(/,/g, ""), 10);
+  }
+  if (!description) {
+    const descMatch = html.match(/<meta[^>]*name="description"[^>]*content="([^"]+)"/);
+    if (descMatch) description = descMatch[1];
+  }
+
+  return {
+    source: "onthemarket",
+    source_id: sourceId,
+    address,
+    price,
+    bedrooms,
+    bathrooms,
+    property_type: propertyType,
+    description,
+    image_url: firstImage,
+    listing_url: url.split("?")[0].split("#")[0],
+    agent_name: agentName,
+    last_seen_at: new Date().toISOString(),
+    is_active: true,
+  };
+}
