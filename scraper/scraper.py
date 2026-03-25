@@ -59,8 +59,9 @@ def upsert_properties(supabase: Client, properties: list[dict]) -> list[dict]:
 
 def send_email_notification(new_listings: list[dict]) -> None:
     api_key = os.environ.get("RESEND_API_KEY")
-    notify_email = os.environ.get("NOTIFY_EMAIL") or os.environ.get("NOTFIY_EMAIL", "")
+    notify_email = os.environ.get("NOTIFY_EMAIL", "")
     to_emails = [e.strip() for e in notify_email.split(",") if e.strip()]
+    from_email = os.environ.get("RESEND_FROM_EMAIL", "London House Hunt <onboarding@resend.dev>")
     if not api_key or not to_emails:
         print("  No RESEND_API_KEY or NOTIFY_EMAIL set — skipping email.")
         return
@@ -97,21 +98,26 @@ def send_email_notification(new_listings: list[dict]) -> None:
       </p>
     </div>"""
 
-    resp = httpx.post(
-        "https://api.resend.com/emails",
-        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-        json={
-            "from": "London House Hunt <onboarding@resend.dev>",
-            "to": to_emails,
-            "subject": f"{count} new listing{'s' if count != 1 else ''} — London House Hunt",
-            "html": html,
-        },
-        timeout=15,
-    )
-    if resp.status_code == 200:
-        print(f"  Email sent to {', '.join(to_emails)}")
-    else:
-        print(f"  Email failed: {resp.status_code} {resp.text}")
+    subject = f"{count} new listing{'s' if count != 1 else ''} — London House Hunt"
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+
+    # Send individually per recipient so one failure doesn't block others
+    for email in to_emails:
+        resp = httpx.post(
+            "https://api.resend.com/emails",
+            headers=headers,
+            json={
+                "from": from_email,
+                "to": [email],
+                "subject": subject,
+                "html": html,
+            },
+            timeout=15,
+        )
+        if resp.status_code == 200:
+            print(f"  Email sent to {email}")
+        else:
+            print(f"  Email to {email} failed: {resp.status_code} {resp.text}")
 
 
 if __name__ == "__main__":
