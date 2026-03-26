@@ -11,7 +11,6 @@ from datetime import datetime, timezone
 import httpx
 
 BASE_URL = "https://www.onthemarket.com"
-SEARCH_URL = BASE_URL + "/to-rent/property/islington/"
 
 HEADERS = {
     "User-Agent": (
@@ -23,12 +22,6 @@ HEADERS = {
     "Accept-Language": "en-GB,en;q=0.9",
 }
 
-SEARCH_PARAMS = {
-    "min-price": "2000",
-    "max-price": "2700",
-    "recently-added": "24-hours",
-}
-
 MAX_PAGES = 10
 DELAY_SECONDS = 2
 
@@ -37,17 +30,17 @@ _REDUX_RE = re.compile(
 )
 
 
-def _fetch_page(client: httpx.Client, page: int) -> tuple[list[dict], int]:
+def _fetch_page(client: httpx.Client, page: int, search_url: str, search_params: dict) -> tuple[list[dict], int]:
     """
     Fetch one page of search results.
     Extracts property data from the embedded Redux state in the HTML response.
     Returns (raw property list, total result count).
     """
-    params = {**SEARCH_PARAMS}
+    params = {**search_params}
     if page > 1:
         params["page"] = str(page)
 
-    response = client.get(SEARCH_URL, params=params, timeout=15)
+    response = client.get(search_url, params=params, timeout=15)
     response.raise_for_status()
 
     # The Redux state is inside a large <script> tag containing initialReduxState
@@ -148,16 +141,27 @@ def _parse_property(prop: dict, now: str) -> dict:
     }
 
 
-def scrape() -> list[dict]:
+def scrape(
+    location_slug: str = "islington",
+    min_price: int = 2000,
+    max_price: int = 2700,
+) -> list[dict]:
     """
-    Paginate through all OnTheMarket results for the Islington search.
+    Paginate through all OnTheMarket results for the given area and price range.
     Returns a list of property dicts matching the DB schema.
     """
+    search_url = BASE_URL + f"/to-rent/property/{location_slug}/"
+    search_params = {
+        "min-price": str(min_price),
+        "max-price": str(max_price),
+        "recently-added": "24-hours",
+    }
+
     now = datetime.now(timezone.utc).isoformat()
     all_raw: list[dict] = []
 
     with httpx.Client(headers=HEADERS, follow_redirects=True) as client:
-        raw_props, total = _fetch_page(client, 1)
+        raw_props, total = _fetch_page(client, 1, search_url, search_params)
         all_raw.extend(raw_props)
 
         page_size = len(raw_props) or 30
@@ -166,7 +170,7 @@ def scrape() -> list[dict]:
 
         for page in range(2, total_pages + 1):
             time.sleep(DELAY_SECONDS)
-            raw_props, _ = _fetch_page(client, page)
+            raw_props, _ = _fetch_page(client, page, search_url, search_params)
             if not raw_props:
                 break
             all_raw.extend(raw_props)

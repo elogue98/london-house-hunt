@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
-import { Property, PropertyCategory } from "@/types/property";
+import { useState, useCallback, useMemo, useEffect } from "react";
+import { Property, PropertyCategory, SearchProfile } from "@/types/property";
 import DashboardHeader from "@/components/ui/DashboardHeader";
 import TabBar, { TabId } from "@/components/ui/TabBar";
 import StatsBar from "@/components/ui/StatsBar";
 import PropertyGrid from "./PropertyGrid";
+
+const PROFILE_STORAGE_KEY = "lhh_selected_profile";
 
 interface PropertyDashboardProps {
   initialNew: Property[];
@@ -13,6 +15,8 @@ interface PropertyDashboardProps {
   initialCalled: Property[];
   initialBin: Property[];
   lastScraped: string | null;
+  searchSummary?: string;
+  profiles?: SearchProfile[];
 }
 
 function matchesSearch(p: Property, q: string): boolean {
@@ -21,19 +25,56 @@ function matchesSearch(p: Property, q: string): boolean {
     .some((field) => field?.toLowerCase().includes(lower));
 }
 
+function buildSummary(profile: SearchProfile): string {
+  const areas = profile.areas.map((a) => a.name).join(", ");
+  return `${areas}\u2002\u00b7\u2002\u00a3${profile.min_price.toLocaleString()}\u2013\u00a3${profile.max_price.toLocaleString()}/mo`;
+}
+
 export default function PropertyDashboard({
   initialNew,
   initialWishlist,
   initialCalled,
   initialBin,
   lastScraped,
+  searchSummary,
+  profiles = [],
 }: PropertyDashboardProps) {
   const [activeTab, setActiveTab] = useState<TabId>("new");
   const [search, setSearch] = useState("");
+  // "all" or a profile id — initialised from localStorage after mount
+  const [selectedProfileId, setSelectedProfileId] = useState<string>("all");
+  const [profileMounted, setProfileMounted] = useState(false);
   const [newProperties, setNewProperties] = useState(initialNew);
   const [wishlistProperties, setWishlistProperties] = useState(initialWishlist);
   const [calledProperties, setCalledProperties] = useState(initialCalled);
   const [binProperties, setBinProperties] = useState(initialBin);
+
+  // Restore selected profile from localStorage after mount
+  useEffect(() => {
+    const stored = localStorage.getItem(PROFILE_STORAGE_KEY);
+    if (stored && (stored === "all" || profiles.some((p) => p.id === stored))) {
+      setSelectedProfileId(stored);
+    }
+    setProfileMounted(true);
+  }, [profiles]);
+
+  const selectProfile = (id: string) => {
+    setSelectedProfileId(id);
+    localStorage.setItem(PROFILE_STORAGE_KEY, id);
+  };
+
+  // Filter properties by selected profile (null search_profile_id = legacy/untagged, shown in All)
+  const filterByProfile = useCallback(
+    (list: Property[]) => {
+      if (selectedProfileId === "all") return list;
+      return list.filter((p) => p.search_profile_id === selectedProfileId);
+    },
+    [selectedProfileId]
+  );
+
+  // Active summary: use selected profile's areas/prices, or the combined summary for "all"
+  const selectedProfile = profiles.find((p) => p.id === selectedProfileId);
+  const activeSearchSummary = selectedProfile ? buildSummary(selectedProfile) : searchSummary;
 
   const allArrays = {
     new: newProperties,
@@ -120,20 +161,27 @@ export default function PropertyDashboard({
     []
   );
 
+  const profileFiltered = useMemo(() => ({
+    new: filterByProfile(newProperties),
+    wishlist: filterByProfile(wishlistProperties),
+    called: filterByProfile(calledProperties),
+    bin: filterByProfile(binProperties),
+  }), [filterByProfile, newProperties, wishlistProperties, calledProperties, binProperties]);
+
   const filteredProperties = useMemo(() => {
-    const base = allArrays[activeTab];
+    const base = profileFiltered[activeTab];
     if (!search.trim()) return base;
     return base.filter((p) => matchesSearch(p, search));
-  }, [activeTab, search, newProperties, wishlistProperties, calledProperties, binProperties]);
+  }, [activeTab, search, profileFiltered]);
 
   const tabs = [
-    { id: "new" as TabId, label: "New", count: newProperties.length },
-    { id: "wishlist" as TabId, label: "Wish List", count: wishlistProperties.length },
-    { id: "called" as TabId, label: "Called", count: calledProperties.length },
-    { id: "bin" as TabId, label: "Bin", count: binProperties.length },
+    { id: "new" as TabId, label: "New", count: profileFiltered.new.length },
+    { id: "wishlist" as TabId, label: "Wish List", count: profileFiltered.wishlist.length },
+    { id: "called" as TabId, label: "Called", count: profileFiltered.called.length },
+    { id: "bin" as TabId, label: "Bin", count: profileFiltered.bin.length },
   ];
 
-  const totalForTab = allArrays[activeTab].length;
+  const totalForTab = profileFiltered[activeTab].length;
 
   const emptyMessages: Record<TabId, { msg: string; sub?: string }> = {
     new: {
@@ -160,14 +208,44 @@ export default function PropertyDashboard({
 
   return (
     <>
-    <DashboardHeader onImport={handleImport} />
+    <DashboardHeader onImport={handleImport} searchSummary={activeSearchSummary} />
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       <StatsBar
-        newCount={newProperties.length}
-        wishlistCount={wishlistProperties.length}
-        calledCount={calledProperties.length}
+        newCount={profileFiltered.new.length}
+        wishlistCount={profileFiltered.wishlist.length}
+        calledCount={profileFiltered.called.length}
         lastScraped={lastScraped}
       />
+
+      {/* Profile selector — only shown when there are multiple profiles and after mount */}
+      {profileMounted && profiles.length > 1 && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-text-muted text-xs font-body mr-1">View:</span>
+          <button
+            onClick={() => selectProfile("all")}
+            className={`text-xs font-body px-3 py-1 rounded-full border transition-colors ${
+              selectedProfileId === "all"
+                ? "bg-accent text-white border-accent"
+                : "bg-bg-card text-text-secondary border-border hover:border-border-hover"
+            }`}
+          >
+            All
+          </button>
+          {profiles.map((profile) => (
+            <button
+              key={profile.id}
+              onClick={() => selectProfile(profile.id)}
+              className={`text-xs font-body px-3 py-1 rounded-full border transition-colors ${
+                selectedProfileId === profile.id
+                  ? "bg-accent text-white border-accent"
+                  : "bg-bg-card text-text-secondary border-border hover:border-border-hover"
+              }`}
+            >
+              {profile.name}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Search */}
       <div className="relative">

@@ -1,0 +1,52 @@
+import { AreaConfig } from "@/types/property";
+
+/**
+ * Predefined London areas with their Rightmove region codes and OnTheMarket URL slugs.
+ * Rightmove codes: extracted from search page locationIdentifier param.
+ * OTM slugs: the URL path segment used in /to-rent/property/{slug}/.
+ */
+export const LONDON_AREAS: AreaConfig[] = [
+  { name: "Angel", rightmove_code: "REGION^87179", otm_slug: "angel" },
+  { name: "Archway", rightmove_code: "REGION^87186", otm_slug: "archway" },
+  { name: "Balham", rightmove_code: "REGION^87237", otm_slug: "balham" },
+  { name: "Battersea", rightmove_code: "REGION^87261", otm_slug: "battersea" },
+  { name: "Bermondsey", rightmove_code: "REGION^87289", otm_slug: "bermondsey" },
+  { name: "Bethnal Green", rightmove_code: "REGION^87299", otm_slug: "bethnal-green" },
+  { name: "Bow", rightmove_code: "REGION^87363", otm_slug: "bow" },
+  { name: "Brixton", rightmove_code: "REGION^87382", otm_slug: "brixton" },
+  { name: "Camden", rightmove_code: "REGION^87404", otm_slug: "camden" },
+  { name: "Canada Water", rightmove_code: "REGION^87413", otm_slug: "canada-water" },
+  { name: "Canonbury", rightmove_code: "REGION^87414", otm_slug: "canonbury" },
+  { name: "Chiswick", rightmove_code: "REGION^87467", otm_slug: "chiswick" },
+  { name: "Clapham", rightmove_code: "REGION^87490", otm_slug: "clapham" },
+  { name: "Crouch End", rightmove_code: "REGION^87613", otm_slug: "crouch-end" },
+  { name: "Dalston", rightmove_code: "REGION^87638", otm_slug: "dalston" },
+  { name: "Deptford", rightmove_code: "REGION^87672", otm_slug: "deptford" },
+  { name: "East Dulwich", rightmove_code: "REGION^87969", otm_slug: "east-dulwich" },
+  { name: "Finsbury Park", rightmove_code: "REGION^88148", otm_slug: "finsbury-park" },
+  { name: "Greenwich", rightmove_code: "REGION^93169", otm_slug: "greenwich" },
+  { name: "Hackney", rightmove_code: "REGION^93204", otm_slug: "hackney" },
+  { name: "Hammersmith", rightmove_code: "REGION^93218", otm_slug: "hammersmith" },
+  { name: "Herne Hill", rightmove_code: "REGION^93274", otm_slug: "herne-hill" },
+  { name: "Highbury", rightmove_code: "REGION^93293", otm_slug: "highbury" },
+  { name: "Highgate", rightmove_code: "REGION^93296", otm_slug: "highgate" },
+  { name: "Holloway", rightmove_code: "REGION^93332", otm_slug: "holloway" },
+  { name: "Homerton", rightmove_code: "REGION^93333", otm_slug: "homerton" },
+  { name: "Islington", rightmove_code: "REGION^93965", otm_slug: "islington" },
+  { name: "Kennington", rightmove_code: "REGION^93529", otm_slug: "kennington" },
+  { name: "Kentish Town", rightmove_code: "REGION^93547", otm_slug: "kentish-town" },
+  { name: "Muswell Hill", rightmove_code: "REGION^94217", otm_slug: "muswell-hill" },
+  { name: "New Cross", rightmove_code: "REGION^94268", otm_slug: "new-cross" },
+  { name: "Notting Hill", rightmove_code: "REGION^94342", otm_slug: "notting-hill" },
+  { name: "Peckham", rightmove_code: "REGION^94413", otm_slug: "peckham" },
+  { name: "Shepherd's Bush", rightmove_code: "REGION^95118", otm_slug: "shepherds-bush" },
+  { name: "Shoreditch", rightmove_code: "REGION^95157", otm_slug: "shoreditch" },
+  { name: "Stockwell", rightmove_code: "REGION^95358", otm_slug: "stockwell" },
+  { name: "Stoke Newington", rightmove_code: "REGION^95371", otm_slug: "stoke-newington" },
+  { name: "Stratford", rightmove_code: "REGION^95397", otm_slug: "stratford" },
+  { name: "Streatham", rightmove_code: "REGION^95407", otm_slug: "streatham" },
+  { name: "Tooting", rightmove_code: "REGION^95611", otm_slug: "tooting" },
+  { name: "Tufnell Park", rightmove_code: "REGION^95661", otm_slug: "tufnell-park" },
+  { name: "Vauxhall", rightmove_code: "REGION^95733", otm_slug: "vauxhall" },
+  { name: "Wandsworth", rightmove_code: "REGION^95781", otm_slug: "wandsworth" },
+];

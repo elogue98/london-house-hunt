@@ -22,10 +22,7 @@ HEADERS = {
     "Accept-Language": "en-GB,en;q=0.9",
 }
 
-SEARCH_PARAMS = {
-    "locationIdentifier": "REGION^93965",
-    "minPrice": "2000",
-    "maxPrice": "2700",
+_BASE_SEARCH_PARAMS = {
     "numberOfPropertiesPerPage": "24",
     "channel": "RENT",
     "currencyCode": "GBP",
@@ -42,13 +39,13 @@ _EMBEDDED_JSON_RE = re.compile(
 )
 
 
-def _fetch_page(client: httpx.Client, index: int) -> tuple[list[dict], int]:
+def _fetch_page(client: httpx.Client, index: int, search_params: dict) -> tuple[list[dict], int]:
     """
     Fetch one page of search results.
     Extracts property data from the embedded JSON in the HTML response.
     Returns (raw property list, total result count).
     """
-    params = {**SEARCH_PARAMS, "index": str(index)}
+    params = {**search_params, "index": str(index)}
     response = client.get(SEARCH_URL, params=params, timeout=15)
     response.raise_for_status()
 
@@ -133,16 +130,27 @@ def _parse_property(prop: dict, now: str) -> dict:
     }
 
 
-def scrape() -> list[dict]:
+def scrape(
+    location_code: str = "REGION^93965",
+    min_price: int = 2000,
+    max_price: int = 2700,
+) -> list[dict]:
     """
-    Paginate through all Rightmove results for the Islington search.
+    Paginate through all Rightmove results for the given area and price range.
     Returns a list of property dicts matching the DB schema.
     """
+    search_params = {
+        **_BASE_SEARCH_PARAMS,
+        "locationIdentifier": location_code,
+        "minPrice": str(min_price),
+        "maxPrice": str(max_price),
+    }
+
     now = datetime.now(timezone.utc).isoformat()
     all_raw: list[dict] = []
 
     with httpx.Client(headers=HEADERS, follow_redirects=True) as client:
-        raw_props, total = _fetch_page(client, 0)
+        raw_props, total = _fetch_page(client, 0, search_params)
         all_raw.extend(raw_props)
 
         total_pages = min((total + PAGE_SIZE - 1) // PAGE_SIZE, MAX_PAGES)
@@ -151,7 +159,7 @@ def scrape() -> list[dict]:
         for page in range(1, total_pages):
             time.sleep(DELAY_SECONDS)
             index = page * PAGE_SIZE
-            raw_props, _ = _fetch_page(client, index)
+            raw_props, _ = _fetch_page(client, index, search_params)
             if not raw_props:
                 break
             all_raw.extend(raw_props)

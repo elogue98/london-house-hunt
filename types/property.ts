@@ -1,5 +1,22 @@
 export type PropertyCategory = 'bin' | 'wishlist' | 'called';
 
+export interface AreaConfig {
+  name: string;
+  rightmove_code: string;
+  otm_slug: string;
+}
+
+export interface SearchProfile {
+  id: string;
+  name: string;
+  areas: AreaConfig[];
+  min_price: number;
+  max_price: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Property {
   id: string;
   source: string;
@@ -22,6 +39,7 @@ export interface Property {
   is_active: boolean;
   category: PropertyCategory | null;
   notes: string | null;
+  search_profile_id: string | null;
 }
 
 export interface PropertyFilters {

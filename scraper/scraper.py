@@ -48,6 +48,7 @@ def upsert_properties(supabase: Client, properties: list[dict]) -> list[dict]:
     supabase.table("properties").upsert(
         properties,
         on_conflict="source,source_id",
+        ignore_duplicates=False,
     ).execute()
 
     new = [
@@ -57,7 +58,7 @@ def upsert_properties(supabase: Client, properties: list[dict]) -> list[dict]:
     return new
 
 
-def send_email_notification(new_listings: list[dict]) -> None:
+def send_email_notification(new_listings: list[dict], profiles: list[dict] | None = None) -> None:
     api_key = os.environ.get("RESEND_API_KEY")
     notify_email = os.environ.get("NOTIFY_EMAIL", "")
     to_emails = [e.strip() for e in notify_email.split(",") if e.strip()]
@@ -80,6 +81,16 @@ def send_email_notification(new_listings: list[dict]) -> None:
           </td>
         </tr>"""
 
+    # Build search summary from active profiles
+    if profiles:
+        all_areas = [a["name"] for p in profiles for a in p.get("areas", [])]
+        unique_areas = list(dict.fromkeys(all_areas))  # deduplicate, preserve order
+        min_price = min(p["min_price"] for p in profiles)
+        max_price = max(p["max_price"] for p in profiles)
+        search_subtitle = f"{', '.join(unique_areas)} · £{min_price:,}–£{max_price:,}/mo"
+    else:
+        search_subtitle = "London House Hunt"
+
     count = len(new_listings)
     html = f"""
     <div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#1a1715;">
@@ -87,7 +98,7 @@ def send_email_notification(new_listings: list[dict]) -> None:
         {count} new listing{'s' if count != 1 else ''} on London House Hunt
       </h2>
       <p style="font-size:13px;color:#9a928c;margin-top:0;">
-        Islington · £2,000–£2,700/mo
+        {search_subtitle}
       </p>
       <table style="width:100%;border-collapse:collapse;">{rows}</table>
       <p style="margin-top:24px;">
@@ -123,25 +134,69 @@ def send_email_notification(new_listings: list[dict]) -> None:
 if __name__ == "__main__":
     print(f"[{datetime.now(timezone.utc).isoformat()}] Starting scrape...")
 
-    supabase = build_supabase_client()
+    supabase_client = build_supabase_client()
 
-    # Run all source scrapers
+    # Fetch active search profiles
+    profiles_res = supabase_client.table("search_profiles").select("*").eq("is_active", True).execute()
+    profiles = profiles_res.data or []
+
+    if not profiles:
+        print("No active search profiles found — nothing to scrape.")
+        exit(0)
+
+    print(f"Found {len(profiles)} active profile(s).")
+
+    # Run scrapers for each profile and area
     all_listings: list[dict] = []
 
-    print("Fetching from Rightmove...")
-    try:
-        all_listings.extend(rightmove.scrape())
-    except Exception as e:
-        print(f"  Rightmove failed: {e}")
+    for profile in profiles:
+        profile_id = profile["id"]
+        profile_name = profile["name"]
+        areas = profile.get("areas", [])
+        min_price = profile["min_price"]
+        max_price = profile["max_price"]
 
-    print("Fetching from OnTheMarket...")
-    try:
-        all_listings.extend(onthemarket.scrape())
-    except Exception as e:
-        print(f"  OnTheMarket failed: {e}")
+        if not areas:
+            print(f"  Profile '{profile_name}' has no areas — skipping.")
+            continue
 
-    print(f"Upserting {len(all_listings)} listings into Supabase...")
-    new_listings = upsert_properties(supabase, all_listings)
+        print(f"\nProfile: {profile_name} (£{min_price:,}–£{max_price:,}/mo)")
+
+        for area in areas:
+            area_name = area["name"]
+            rightmove_code = area["rightmove_code"]
+            otm_slug = area["otm_slug"]
+
+            print(f"  Area: {area_name}")
+
+            print(f"    Fetching from Rightmove ({area_name})...")
+            try:
+                listings = rightmove.scrape(
+                    location_code=rightmove_code,
+                    min_price=min_price,
+                    max_price=max_price,
+                )
+                for listing in listings:
+                    listing["search_profile_id"] = profile_id
+                all_listings.extend(listings)
+            except Exception as e:
+                print(f"    Rightmove failed for {area_name}: {e}")
+
+            print(f"    Fetching from OnTheMarket ({area_name})...")
+            try:
+                listings = onthemarket.scrape(
+                    location_slug=otm_slug,
+                    min_price=min_price,
+                    max_price=max_price,
+                )
+                for listing in listings:
+                    listing["search_profile_id"] = profile_id
+                all_listings.extend(listings)
+            except Exception as e:
+                print(f"    OnTheMarket failed for {area_name}: {e}")
+
+    print(f"\nUpserting {len(all_listings)} listings into Supabase...")
+    new_listings = upsert_properties(supabase_client, all_listings)
 
     print(f"\nFound {len(all_listings)} total, {len(new_listings)} new listings")
     if new_listings:
@@ -149,4 +204,4 @@ if __name__ == "__main__":
         for p in new_listings:
             print(f"  {p['listing_url']}")
         print("Sending email notification...")
-        send_email_notification(new_listings)
+        send_email_notification(new_listings, profiles)

@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import { deduplicateProperties, normalizeAddress } from "@/lib/dedup";
 import PropertyDashboard from "@/components/properties/PropertyDashboard";
+import { SearchProfile } from "@/types/property";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +12,7 @@ export const metadata = {
 export default async function DashboardPage() {
   const oneDayAgo = new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString();
 
-  const [newRes, wishlistRes, calledRes, binRes, lastScrapedRes, allAddressesRes] = await Promise.all([
+  const [newRes, wishlistRes, calledRes, binRes, lastScrapedRes, allAddressesRes, profilesRes] = await Promise.all([
     supabase
       .from("properties")
       .select("*")
@@ -48,9 +49,28 @@ export default async function DashboardPage() {
       .select("address")
       .eq("is_active", true)
       .not("category", "is", null),
+    // Fetch active search profiles for the header summary
+    supabase
+      .from("search_profiles")
+      .select("*")
+      .eq("is_active", true)
+      .order("created_at", { ascending: true }),
   ]);
 
   const lastScraped = lastScrapedRes.data?.[0]?.last_seen_at ?? null;
+
+  // Build dynamic header summary from active search profiles
+  const activeProfiles = (profilesRes.data ?? []) as SearchProfile[];
+  const searchSummary = activeProfiles.length > 0
+    ? (() => {
+        const allAreas = activeProfiles.flatMap((p) => p.areas.map((a) => a.name));
+        const uniqueAreas = allAreas.filter((a, i) => allAreas.indexOf(a) === i);
+        const prices = activeProfiles.map((p) => ({ min: p.min_price, max: p.max_price }));
+        const minPrice = Math.min(...prices.map((p) => p.min));
+        const maxPrice = Math.max(...prices.map((p) => p.max));
+        return `${uniqueAreas.join(", ")}\u2002\u00b7\u2002\u00a3${minPrice.toLocaleString()}\u2013\u00a3${maxPrice.toLocaleString()}/mo`;
+      })()
+    : undefined;
 
   // Build a set of normalized addresses for all categorised properties
   // so we can exclude OTM/Zoopla dupes of already-seen Rightmove listings
@@ -70,6 +90,8 @@ export default async function DashboardPage() {
           initialCalled={calledRes.data ?? []}
           initialBin={binRes.data ?? []}
           lastScraped={lastScraped}
+          searchSummary={searchSummary}
+          profiles={activeProfiles}
         />
     </div>
   );

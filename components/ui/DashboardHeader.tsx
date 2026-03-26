@@ -8,9 +8,10 @@ type ImportStatus = "idle" | "loading" | "success" | "error";
 
 interface DashboardHeaderProps {
   onImport?: (property: Property) => void;
+  searchSummary?: string;
 }
 
-export default function DashboardHeader({ onImport }: DashboardHeaderProps) {
+export default function DashboardHeader({ onImport, searchSummary }: DashboardHeaderProps) {
   const [time, setTime] = useState<string | null>(null);
   const [showImport, setShowImport] = useState(false);
   const [importUrl, setImportUrl] = useState("");
@@ -93,7 +94,7 @@ export default function DashboardHeader({ onImport }: DashboardHeaderProps) {
             London House Hunt
           </h1>
           <p className="text-text-secondary text-sm mt-1 font-body">
-            Islington rentals&ensp;·&ensp;£2,000–£2,700/mo
+            {searchSummary ?? "London rentals"}
           </p>
         </div>
         <div className="flex items-baseline gap-4">
@@ -171,6 +172,13 @@ export default function DashboardHeader({ onImport }: DashboardHeaderProps) {
               </div>
             )}
           </div>
+
+          <Link
+            href="/settings"
+            className="text-text-muted hover:text-text-secondary transition-colors text-xs font-body hidden sm:block"
+          >
+            Settings
+          </Link>
 
           <Link
             href="/about"
