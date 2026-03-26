@@ -136,13 +136,24 @@ if __name__ == "__main__":
 
     supabase_client = build_supabase_client()
 
-    # Fetch active search profiles
-    profiles_res = supabase_client.table("search_profiles").select("*").eq("is_active", True).execute()
-    profiles = profiles_res.data or []
+    # Fetch active search profiles, with fallback to hardcoded defaults if table doesn't exist yet
+    DEFAULT_PROFILE = {
+        "id": None,
+        "name": "Islington (default)",
+        "areas": [{"name": "Islington", "rightmove_code": "REGION^93965", "otm_slug": "islington"}],
+        "min_price": 2000,
+        "max_price": 2700,
+    }
+    try:
+        profiles_res = supabase_client.table("search_profiles").select("*").eq("is_active", True).execute()
+        profiles = profiles_res.data or []
+    except Exception as e:
+        print(f"  Could not fetch search profiles ({e}) — using default Islington profile.")
+        profiles = [DEFAULT_PROFILE]
 
     if not profiles:
-        print("No active search profiles found — nothing to scrape.")
-        exit(0)
+        print("No active search profiles found — using default Islington profile.")
+        profiles = [DEFAULT_PROFILE]
 
     print(f"Found {len(profiles)} active profile(s).")
 
