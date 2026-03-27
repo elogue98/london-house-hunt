@@ -45,16 +45,19 @@ def upsert_properties(supabase: Client, properties: list[dict]) -> list[dict]:
     if existing.data:
         existing_keys = {(r["source"], r["source_id"]) for r in existing.data}
 
-    supabase.table("properties").upsert(
-        properties,
-        on_conflict="source,source_id",
-        ignore_duplicates=False,
-    ).execute()
+    new = [p for p in properties if (p["source"], p["source_id"]) not in existing_keys]
+    existing_props = [p for p in properties if (p["source"], p["source_id"]) in existing_keys]
 
-    new = [
-        p for p in properties
-        if (p["source"], p["source_id"]) not in existing_keys
-    ]
+    # Insert brand-new properties (including search_profile_id)
+    if new:
+        supabase.table("properties").insert(new).execute()
+
+    # Update existing properties but don't overwrite search_profile_id
+    if existing_props:
+        for p in existing_props:
+            update = {k: v for k, v in p.items() if k != "search_profile_id"}
+            supabase.table("properties").update(update).eq("source", p["source"]).eq("source_id", p["source_id"]).execute()
+
     return new
 
 
