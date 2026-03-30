@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase-server";
 
-const VALID_CATEGORIES = new Set(["bin", "wishlist", "called", null]);
+const VALID_CATEGORIES = new Set(["bin", "wishlist", "called", "offered", null]);
 
 export async function PATCH(
   request: NextRequest,
