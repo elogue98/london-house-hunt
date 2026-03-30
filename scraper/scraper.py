@@ -65,7 +65,7 @@ def send_email_notification(new_listings: list[dict], profiles: list[dict] | Non
     api_key = os.environ.get("RESEND_API_KEY")
     notify_email = os.environ.get("NOTIFY_EMAIL", "")
     to_emails = [e.strip() for e in notify_email.split(",") if e.strip()]
-    from_email = os.environ.get("RESEND_FROM_EMAIL", "London House Hunt <onboarding@resend.dev>")
+    from_email = os.environ.get("RESEND_FROM_EMAIL") or "London House Hunt <onboarding@resend.dev>"
     if not api_key or not to_emails:
         print("  No RESEND_API_KEY or NOTIFY_EMAIL set — skipping email.")
         return
