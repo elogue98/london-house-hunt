@@ -13,6 +13,7 @@ interface PropertyDashboardProps {
   initialNew: Property[];
   initialWishlist: Property[];
   initialCalled: Property[];
+  initialOffered: Property[];
   initialBin: Property[];
   lastScraped: string | null;
   searchSummary?: string;
@@ -34,6 +35,7 @@ export default function PropertyDashboard({
   initialNew,
   initialWishlist,
   initialCalled,
+  initialOffered,
   initialBin,
   lastScraped,
   searchSummary,
@@ -47,6 +49,7 @@ export default function PropertyDashboard({
   const [newProperties, setNewProperties] = useState(initialNew);
   const [wishlistProperties, setWishlistProperties] = useState(initialWishlist);
   const [calledProperties, setCalledProperties] = useState(initialCalled);
+  const [offeredProperties, setOfferedProperties] = useState(initialOffered);
   const [binProperties, setBinProperties] = useState(initialBin);
 
   // Restore selected profile from localStorage after mount
@@ -80,17 +83,19 @@ export default function PropertyDashboard({
     new: newProperties,
     wishlist: wishlistProperties,
     called: calledProperties,
+    offered: offeredProperties,
     bin: binProperties,
   };
   const setters = {
     new: setNewProperties,
     wishlist: setWishlistProperties,
     called: setCalledProperties,
+    offered: setOfferedProperties,
     bin: setBinProperties,
   };
 
   const findProperty = (id: string): { property: Property; tab: TabId } | null => {
-    for (const tab of ["new", "wishlist", "called", "bin"] as TabId[]) {
+    for (const tab of ["new", "wishlist", "called", "offered", "bin"] as TabId[]) {
       const p = allArrays[tab].find((p) => p.id === id);
       if (p) return { property: p, tab };
     }
@@ -113,6 +118,8 @@ export default function PropertyDashboard({
         setters.wishlist((prev) => [updated, ...prev]);
       } else if (category === "called") {
         setters.called((prev) => [updated, ...prev]);
+      } else if (category === "offered") {
+        setters.offered((prev) => [updated, ...prev]);
       } else if (category === "bin") {
         setters.bin((prev) => [updated, ...prev]);
       }
@@ -129,6 +136,7 @@ export default function PropertyDashboard({
         if (category !== null) {
           const targetTab = category === "wishlist" ? "wishlist"
             : category === "called" ? "called"
+            : category === "offered" ? "offered"
             : "bin";
           setters[targetTab]((prev) => prev.filter((p) => p.id !== id));
         }
@@ -136,12 +144,12 @@ export default function PropertyDashboard({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [newProperties, wishlistProperties, calledProperties, binProperties]
+    [newProperties, wishlistProperties, calledProperties, offeredProperties, binProperties]
   );
 
   const updateNotes = useCallback(
     async (id: string, notes: string | null) => {
-      for (const tab of ["new", "wishlist", "called", "bin"] as TabId[]) {
+      for (const tab of ["new", "wishlist", "called", "offered", "bin"] as TabId[]) {
         setters[tab]((prev) =>
           prev.map((p) => (p.id === id ? { ...p, notes } : p))
         );
@@ -165,8 +173,9 @@ export default function PropertyDashboard({
     new: filterByProfile(newProperties),
     wishlist: filterByProfile(wishlistProperties),
     called: filterByProfile(calledProperties),
+    offered: filterByProfile(offeredProperties),
     bin: filterByProfile(binProperties),
-  }), [filterByProfile, newProperties, wishlistProperties, calledProperties, binProperties]);
+  }), [filterByProfile, newProperties, wishlistProperties, calledProperties, offeredProperties, binProperties]);
 
   const filteredProperties = useMemo(() => {
     const base = profileFiltered[activeTab];
@@ -178,6 +187,7 @@ export default function PropertyDashboard({
     { id: "new" as TabId, label: "New", count: profileFiltered.new.length },
     { id: "wishlist" as TabId, label: "Wish List", count: profileFiltered.wishlist.length },
     { id: "called" as TabId, label: "Called", count: profileFiltered.called.length },
+    { id: "offered" as TabId, label: "Offered", count: profileFiltered.offered.length },
     { id: "bin" as TabId, label: "Bin", count: profileFiltered.bin.length },
   ];
 
@@ -195,6 +205,10 @@ export default function PropertyDashboard({
     called: {
       msg: search ? "No listings match your search" : "No called properties yet",
       sub: search ? undefined : "Mark a property as called after contacting the agent.",
+    },
+    offered: {
+      msg: search ? "No listings match your search" : "No offers made yet",
+      sub: search ? undefined : "Properties you've made an offer on appear here.",
     },
     bin: {
       msg: search ? "No listings match your search" : "Your bin is empty",

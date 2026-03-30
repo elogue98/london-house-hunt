@@ -1,6 +1,6 @@
 "use client";
 
-export type TabId = "new" | "wishlist" | "called" | "bin";
+export type TabId = "new" | "wishlist" | "called" | "offered" | "bin";
 
 interface Tab {
   id: TabId;
@@ -47,6 +47,8 @@ export default function TabBar({ activeTab, onTabChange, tabs }: TabBarProps) {
                         ? "bg-accent-gold/20 text-accent-gold"
                         : tab.id === "called"
                         ? "bg-accent-blue/20 text-accent-blue"
+                        : tab.id === "offered"
+                        ? "bg-purple-500/20 text-purple-400"
                         : "bg-accent-red/20 text-accent-red"
                       : "bg-bg-input text-text-muted"
                   }

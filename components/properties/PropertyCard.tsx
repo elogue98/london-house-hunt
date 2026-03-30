@@ -58,6 +58,12 @@ const IconCheck = () => (
   </svg>
 );
 
+const IconOffer = () => (
+  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+);
+
 const IconBed = () => (
   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
@@ -174,6 +180,10 @@ export default function PropertyCard({
           <span className="absolute top-3 left-3 bg-accent-blue text-white text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded">
             Called
           </span>
+        ) : property.category === "offered" ? (
+          <span className="absolute top-3 left-3 bg-purple-500 text-white text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded">
+            Offered
+          </span>
         ) : property.listing_update_reason?.toLowerCase().includes("price") ? (
           <span className="absolute top-3 left-3 bg-accent text-white text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded">
             Price reduced
@@ -280,6 +290,11 @@ export default function PropertyCard({
             "called", "Called", <IconCheck />,
             "var(--btn-called-bg)", "var(--btn-called-border)", "text-accent-blue",
             "hover:bg-[#edf3fa] hover:text-accent-blue"
+          )}
+          {categoryBtn(
+            "offered", "Offered", <IconOffer />,
+            "rgba(168,85,247,0.15)", "rgba(168,85,247,0.4)", "text-purple-400",
+            "hover:bg-purple-500/10 hover:text-purple-400"
           )}
         </div>
       </div>

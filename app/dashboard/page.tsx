@@ -12,7 +12,7 @@ export const metadata = {
 export default async function DashboardPage() {
   const oneDayAgo = new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString();
 
-  const [newRes, wishlistRes, calledRes, binRes, lastScrapedRes, allAddressesRes, profilesRes] = await Promise.all([
+  const [newRes, wishlistRes, calledRes, offeredRes, binRes, lastScrapedRes, allAddressesRes, profilesRes] = await Promise.all([
     supabase
       .from("properties")
       .select("*")
@@ -31,6 +31,12 @@ export default async function DashboardPage() {
       .select("*")
       .eq("is_active", true)
       .eq("category", "called")
+      .order("last_activity_date", { ascending: false, nullsFirst: false }),
+    supabase
+      .from("properties")
+      .select("*")
+      .eq("is_active", true)
+      .eq("category", "offered")
       .order("last_activity_date", { ascending: false, nullsFirst: false }),
     supabase
       .from("properties")
@@ -88,6 +94,7 @@ export default async function DashboardPage() {
           )}
           initialWishlist={wishlistRes.data ?? []}
           initialCalled={calledRes.data ?? []}
+          initialOffered={offeredRes.data ?? []}
           initialBin={binRes.data ?? []}
           lastScraped={lastScraped}
           searchSummary={searchSummary}

@@ -1,4 +1,4 @@
-export type PropertyCategory = 'bin' | 'wishlist' | 'called';
+export type PropertyCategory = 'bin' | 'wishlist' | 'called' | 'offered';
 
 export interface AreaConfig {
   name: string;
