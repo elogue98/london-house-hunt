@@ -48,7 +48,7 @@ export default function TabBar({ activeTab, onTabChange, tabs }: TabBarProps) {
                         : tab.id === "called"
                         ? "bg-accent-blue/20 text-accent-blue"
                         : tab.id === "offered"
-                        ? "bg-purple-500/20 text-purple-400"
+                        ? "bg-accent-purple/20 text-accent-purple"
                         : "bg-accent-red/20 text-accent-red"
                       : "bg-bg-input text-text-muted"
                   }

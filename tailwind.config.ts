@@ -23,6 +23,7 @@ const config: Config = {
           blue: "var(--accent-blue)",
           green: "var(--accent-green)",
           red: "var(--accent-red)",
+          purple: "var(--accent-purple)",
         },
         text: {
           primary: "var(--text-primary)",

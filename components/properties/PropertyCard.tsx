@@ -181,7 +181,7 @@ export default function PropertyCard({
             Called
           </span>
         ) : property.category === "offered" ? (
-          <span className="absolute top-3 left-3 bg-purple-500 text-white text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded">
+          <span className="absolute top-3 left-3 bg-accent-purple text-white text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded">
             Offered
           </span>
         ) : property.listing_update_reason?.toLowerCase().includes("price") ? (
@@ -293,8 +293,8 @@ export default function PropertyCard({
           )}
           {categoryBtn(
             "offered", "Offered", <IconOffer />,
-            "rgba(168,85,247,0.15)", "rgba(168,85,247,0.4)", "text-purple-400",
-            "hover:bg-purple-500/10 hover:text-purple-400"
+            "var(--btn-offered-bg)", "var(--btn-offered-border)", "text-accent-purple",
+            "hover:bg-[#f3effe] hover:text-accent-purple"
           )}
         </div>
       </div>

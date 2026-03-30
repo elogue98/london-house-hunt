@@ -15,6 +15,7 @@
   --accent-blue: #2563b0;
   --accent-green: #16a34a;
   --accent-red: #dc2626;
+  --accent-purple: #7c3aed;
 
   --text-primary: #1a1715;
   --text-secondary: #5a534e;
@@ -30,6 +31,8 @@
   --btn-wishlist-border: #e6d48a;
   --btn-called-bg: #edf3fa;
   --btn-called-border: #b8d0e8;
+  --btn-offered-bg: #f3effe;
+  --btn-offered-border: #c4b5fd;
 }
 
 body {
