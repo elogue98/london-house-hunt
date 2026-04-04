@@ -147,7 +147,7 @@ export default function SearchProfileManager({ initialProfiles }: SearchProfileM
   };
 
   const deleteProfile = async (id: string) => {
-    if (!confirm("Delete this search profile? Existing properties will not be removed.")) return;
+    if (!confirm("Delete this search profile and all its properties? This cannot be undone.")) return;
     setProfiles((prev) => prev.filter((p) => p.id !== id));
     try {
       await fetch(`/api/search-profiles/${id}`, { method: "DELETE" });

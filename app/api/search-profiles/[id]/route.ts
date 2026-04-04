@@ -50,10 +50,10 @@ export async function DELETE(
   _request: Request,
   { params }: { params: { id: string } }
 ) {
-  // Nullify search_profile_id on linked properties before deleting
+  // Delete linked properties before deleting the profile
   await supabaseServer
     .from("properties")
-    .update({ search_profile_id: null })
+    .delete()
     .eq("search_profile_id", params.id);
 
   const { error } = await supabaseServer

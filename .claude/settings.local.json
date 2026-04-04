@@ -27,7 +27,16 @@
       "WebFetch(domain:propapis.com)",
       "WebFetch(domain:automatio.ai)",
       "Bash(python3 -m playwright install chromium)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(ls /Users/eoinlogue/london-house-hunt/scraper/.env*)",
+      "Bash(ls /Users/eoinlogue/london-house-hunt/.env*)",
+      "Bash(gh run:*)",
+      "Bash(gh secret:*)",
+      "Bash(gh workflow:*)",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)",
+      "Bash(python test_email.py)",
+      "Bash(RESEND_API_KEY=\"\" NOTIFY_EMAIL=\"\" python3 test_email.py)"
     ]
   }
 }
