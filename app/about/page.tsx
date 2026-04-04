@@ -29,7 +29,7 @@ const STEPS = [
   {
     num: "01",
     title: "Scrape",
-    text: "A GitHub Actions cron job runs every 4 hours, fetching rental listings from Rightmove and OnTheMarket for Islington in the £2,000\u2013£2,700/month range.",
+    text: "A GitHub Actions cron job runs every 4 hours, fetching rental listings from Rightmove and OnTheMarket for each active search profile. Profiles are configurable in Settings — each has its own areas and price range.",
   },
   {
     num: "02",
@@ -49,7 +49,7 @@ const STEPS = [
   {
     num: "05",
     title: "Triage",
-    text: "The dashboard lets you quickly sort listings into Wish List, Called, or Bin. Notes are saved per property. Everything persists across sessions.",
+    text: "The dashboard lets you sort listings into Wish List, Called, Offered, or Bin. Notes are saved per property. Binned properties can be permanently deleted. Everything persists across sessions.",
   },
 ];
 
@@ -173,28 +173,24 @@ export default function AboutPage() {
           <div className="bg-bg-card rounded-lg border border-border p-5">
             <div className="grid grid-cols-2 gap-y-3 gap-x-8 font-body text-sm">
               <div>
-                <span className="text-text-muted text-xs uppercase tracking-wider block mb-1">Area</span>
-                <span className="text-text-primary">Islington, London</span>
+                <span className="text-text-muted text-xs uppercase tracking-wider block mb-1">Areas & Price</span>
+                <span className="text-text-primary">Configurable per search profile</span>
               </div>
               <div>
                 <span className="text-text-muted text-xs uppercase tracking-wider block mb-1">Type</span>
                 <span className="text-text-primary">Rentals</span>
               </div>
               <div>
-                <span className="text-text-muted text-xs uppercase tracking-wider block mb-1">Price</span>
-                <span className="text-text-primary">£2,000 – £2,700/mo</span>
-              </div>
-              <div>
-                <span className="text-text-muted text-xs uppercase tracking-wider block mb-1">Window</span>
-                <span className="text-text-primary">Last 24 hours</span>
-              </div>
-              <div>
                 <span className="text-text-muted text-xs uppercase tracking-wider block mb-1">Frequency</span>
-                <span className="text-text-primary">Every 4 hours (5x daily)</span>
+                <span className="text-text-primary">Every 4 hours</span>
               </div>
               <div>
                 <span className="text-text-muted text-xs uppercase tracking-wider block mb-1">Dedup</span>
                 <span className="text-text-primary">By normalised address</span>
+              </div>
+              <div className="col-span-2">
+                <span className="text-text-muted text-xs uppercase tracking-wider block mb-1">Profiles</span>
+                <Link href="/settings" className="text-accent hover:underline">Manage in Settings →</Link>
               </div>
             </div>
           </div>
