@@ -216,6 +216,15 @@ export default function PropertyDashboard({
     },
   };
 
+  const deleteProperty = useCallback(async (id: string) => {
+    setBinProperties((prev) => prev.filter((p) => p.id !== id));
+    try {
+      await fetch(`/api/properties/${id}`, { method: "DELETE" });
+    } catch {
+      // Silent fail — stale UI but harmless
+    }
+  }, []);
+
   const handleImport = useCallback((property: Property) => {
     setNewProperties((prev) => [property, ...prev]);
   }, []);
@@ -301,6 +310,7 @@ export default function PropertyDashboard({
         properties={filteredProperties}
         onCategoryChange={updateCategory}
         onNotesChange={updateNotes}
+        onDelete={activeTab === "bin" ? deleteProperty : undefined}
         emptyMessage={emptyMessages[activeTab].msg}
         emptySubtext={emptyMessages[activeTab].sub}
       />

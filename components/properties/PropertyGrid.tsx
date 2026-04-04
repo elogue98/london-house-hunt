@@ -7,6 +7,7 @@ interface PropertyGridProps {
   properties: Property[];
   onCategoryChange: (id: string, category: PropertyCategory | null) => void;
   onNotesChange: (id: string, notes: string | null) => void;
+  onDelete?: (id: string) => void;
   emptyMessage: string;
   emptySubtext?: string;
 }
@@ -15,6 +16,7 @@ export default function PropertyGrid({
   properties,
   onCategoryChange,
   onNotesChange,
+  onDelete,
   emptyMessage,
   emptySubtext,
 }: PropertyGridProps) {
@@ -38,6 +40,7 @@ export default function PropertyGrid({
           index={i}
           onCategoryChange={onCategoryChange}
           onNotesChange={onNotesChange}
+          onDelete={onDelete}
         />
       ))}
     </div>
