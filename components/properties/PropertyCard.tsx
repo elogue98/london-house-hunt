@@ -278,7 +278,27 @@ export default function PropertyCard({
 
         {/* Category buttons */}
         <div className="flex gap-1 mt-auto pt-1 border-t border-border">
-          {onDelete ? (
+          {categoryBtn(
+            "bin", "Bin", <IconBin />,
+            "var(--btn-bin-bg)", "var(--btn-bin-border)", "text-accent-red",
+            "hover:bg-[#fdf0ec] hover:text-accent-red"
+          )}
+          {categoryBtn(
+            "wishlist", "Wish List", <IconStar filled={property.category === "wishlist"} />,
+            "var(--btn-wishlist-bg)", "var(--btn-wishlist-border)", "text-accent-gold",
+            "hover:bg-[#faf5e4] hover:text-accent-gold"
+          )}
+          {categoryBtn(
+            "called", "Called", <IconCheck />,
+            "var(--btn-called-bg)", "var(--btn-called-border)", "text-accent-blue",
+            "hover:bg-[#edf3fa] hover:text-accent-blue"
+          )}
+          {categoryBtn(
+            "offered", "Offered", <IconOffer />,
+            "var(--btn-offered-bg)", "var(--btn-offered-border)", "text-accent-purple",
+            "hover:bg-[#f3effe] hover:text-accent-purple"
+          )}
+          {onDelete && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -286,33 +306,13 @@ export default function PropertyCard({
                 onDelete(property.id);
               }}
               className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-md text-xs font-medium border border-transparent text-accent-red hover:bg-[#fdf0ec] transition-all duration-150"
+              title="Remove permanently"
             >
-              <IconBin />
-              <span>Remove permanently</span>
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              <span>Delete</span>
             </button>
-          ) : (
-            <>
-              {categoryBtn(
-                "bin", "Bin", <IconBin />,
-                "var(--btn-bin-bg)", "var(--btn-bin-border)", "text-accent-red",
-                "hover:bg-[#fdf0ec] hover:text-accent-red"
-              )}
-              {categoryBtn(
-                "wishlist", "Wish List", <IconStar filled={property.category === "wishlist"} />,
-                "var(--btn-wishlist-bg)", "var(--btn-wishlist-border)", "text-accent-gold",
-                "hover:bg-[#faf5e4] hover:text-accent-gold"
-              )}
-              {categoryBtn(
-                "called", "Called", <IconCheck />,
-                "var(--btn-called-bg)", "var(--btn-called-border)", "text-accent-blue",
-                "hover:bg-[#edf3fa] hover:text-accent-blue"
-              )}
-              {categoryBtn(
-                "offered", "Offered", <IconOffer />,
-                "var(--btn-offered-bg)", "var(--btn-offered-border)", "text-accent-purple",
-                "hover:bg-[#f3effe] hover:text-accent-purple"
-              )}
-            </>
           )}
         </div>
       </div>
